@@ -63,8 +63,15 @@ int _write(int file, char *p, int len)
   /* formation: if (byte per 1ms) is bigger than 1, that is capabillty to send +1bytes in 1ms, OTHO is not. */
   uint32_t timeout = ((((float)huart1.Init.BaudRate / 8) / 1000) > 1) ? (1 * len) : (10 * len);
   HAL_UART_Transmit(&huart1, p, len, timeout);
+
+  /* Testing, based on 9600bps.
+   * significantly exactly be output 12byte. (1.2 * 10) = 12byte
+   */
+   //HAL_UART_Transmit(&huart1, p, len, 10);
+
   /* Bring out recursion.
    * float variable does not output, because default printf does not support %f.
+   * Add linker option "-u_printf_float to "cmake/gcc-xxx-xxx.cmake" file.
    */
    //printf("ret=%d timeout=%.02f\r\n", timeout, (((float)huart1.Init.BaudRate / 8) / 1000));
   return len;
