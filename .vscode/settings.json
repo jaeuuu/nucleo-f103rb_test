@@ -5,5 +5,8 @@
     ],
     "cmake.preferredGenerators": [
         "Ninja"
-    ]
+    ],
+    "files.associations": {
+        "stdio.h": "c"
+    }
 }

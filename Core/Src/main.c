@@ -21,6 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -30,6 +31,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+//#define printf debug
 
 /* USER CODE END PD */
 
@@ -51,9 +53,22 @@ UART_HandleTypeDef huart2;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
-static void MX_USART1_UART_Init(void);
+static void MX_USART1_UART_Init(uint32_t baudrate);
 /* USER CODE BEGIN PFP */
-
+int _write(int file, char *p, int len)
+{
+  /* Based on 9600bps, about 1.2 byte per 1ms. */
+  /* Based on 115200bps, about 14.4 byte per 1ms. */
+  /* So, 10ms-base is enough. */
+  /* formation: if (byte per 1ms) is bigger than 1, that is capabillty to send +1bytes in 1ms, OTHO is not. */
+  uint32_t timeout = ((((float)huart1.Init.BaudRate / 8) / 1000) > 1) ? (1 * len) : (10 * len);
+  HAL_UART_Transmit(&huart1, p, len, timeout);
+  /* Bring out recursion.
+   * float variable does not output, because default printf does not support %f.
+   */
+   //printf("ret=%d timeout=%.02f\r\n", timeout, (((float)huart1.Init.BaudRate / 8) / 1000));
+  return len;
+}
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -91,35 +106,35 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
-  MX_USART1_UART_Init();
+  MX_USART1_UART_Init(9600);
   /* USER CODE BEGIN 2 */
   HAL_StatusTypeDef rcv_status;
   char tx_buf[64] = "Hello, STM32 Nucleo-F103RB Board\r\n";
   char rx_buf[64];
 
-  HAL_UART_Transmit(&huart1, tx_buf, strlen(tx_buf), 100);
+  //HAL_UART_Transmit(&huart1, tx_buf, strlen(tx_buf), 100);
+  //debug("%s", tx_buf);
 
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  uint8_t a = 'a';
+  int ret;
   while (1)
   {
-    //HAL_UART_Transmit(&huart1, tx_buf, strlen(tx_buf), 100);
-    //HAL_UART_Transmit(&huart1, &a, 1, 10);
-    //HAL_Delay(1000);
+    printf("%s", tx_buf);
+    HAL_Delay(1000);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    rcv_status = HAL_UART_Receive(&huart1, rx_buf, 1, 100);
+    //rcv_status = HAL_UART_Receive(&huart1, rx_buf, 1, 100);
 
-    if (rcv_status == HAL_OK) {
-      HAL_UART_Transmit(&huart1, rx_buf, 1, 100);
-      HAL_UART_Transmit(&huart1, tx_buf, strlen(tx_buf), 100);
+    //if (rcv_status == HAL_OK) {
+     // HAL_UART_Transmit(&huart1, rx_buf, 1, 100);
+      //HAL_UART_Transmit(&huart1, tx_buf, strlen(tx_buf), 100);
       //HAL_UART_Transmit(&huart1, rx_buf, 1, 100);
-    }
+    //}
   }
   /* USER CODE END 3 */
 }
@@ -167,7 +182,7 @@ void SystemClock_Config(void)
   * @param None
   * @retval None
   */
-static void MX_USART1_UART_Init(void)
+static void MX_USART1_UART_Init(uint32_t baudrate)
 {
 
   /* USER CODE BEGIN USART1_Init 0 */
@@ -178,7 +193,7 @@ static void MX_USART1_UART_Init(void)
 
   /* USER CODE END USART1_Init 1 */
   huart1.Instance = USART1;
-  huart1.Init.BaudRate = 115200;
+  huart1.Init.BaudRate = baudrate;
   huart1.Init.WordLength = UART_WORDLENGTH_8B;
   huart1.Init.StopBits = UART_STOPBITS_1;
   huart1.Init.Parity = UART_PARITY_NONE;
